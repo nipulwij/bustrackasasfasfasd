@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-gray-50 text-gray-900">
+    <main class="min-h-screen flex items-center justify-center p-4">
+      <div class="w-full max-w-md">
+        <div class="bg-white shadow-xl rounded-2xl p-8">
+          <h1 class="text-2xl font-bold mb-6 text-center">Login</h1>
+
+          <form id="loginForm" novalidate>
+            <!-- Role Selection -->
+            <fieldset class="mb-5">
+              <legend class="block text-sm font-medium text-gray-700 mb-2">Login as</legend>
+              <div class="flex gap-4">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="role" value="passenger" class="peer sr-only" checked />
+                  <span class="px-3 py-2 rounded-md border border-gray-300 peer-checked:bg-blue-600 peer-checked:text-white">Passenger</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="role" value="driver" class="peer sr-only" />
+                  <span class="px-3 py-2 rounded-md border border-gray-300 peer-checked:bg-blue-600 peer-checked:text-white">Driver</span>
+                </label>
+              </div>
+              <p id="roleError" class="mt-1 text-sm text-red-600 hidden">Please select a role.</p>
+            </fieldset>
+
+            <!-- Email -->
+            <div class="mb-5">
+              <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+              <p id="emailError" class="mt-1 text-sm text-red-600 hidden">Enter a valid email address.</p>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-6">
+              <div class="flex items-center justify-between">
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <button type="button" id="togglePassword" class="text-sm text-blue-600 hover:underline">Show</button>
+              </div>
+              <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" placeholder="••••••••" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600" />
+              <p class="mt-1 text-xs text-gray-500">Use at least 8 characters.</p>
+              <p id="passwordError" class="mt-1 text-sm text-red-600 hidden">Password must be at least 8 characters.</p>
+            </div>
+
+            <button type="submit" class="w-full inline-flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600">
+              Sign in
+            </button>
+
+            <p class="mt-4 text-center text-sm text-gray-600">
+              Don’t have an account?
+              <a href="/signup.html" class="text-blue-600 hover:underline">Sign up</a>
+            </p>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const form = document.getElementById('loginForm');
+      const roleError = document.getElementById('roleError');
+      const email = document.getElementById('email');
+      const emailError = document.getElementById('emailError');
+      const password = document.getElementById('password');
+      const passwordError = document.getElementById('passwordError');
+      const togglePassword = document.getElementById('togglePassword');
+
+      togglePassword.addEventListener('click', () => {
+        const isHidden = password.type === 'password';
+        password.type = isHidden ? 'text' : 'password';
+        togglePassword.textContent = isHidden ? 'Hide' : 'Show';
+      });
+
+      function validateEmail(value) {
+        // Basic email regex
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Reset errors
+        roleError.classList.add('hidden');
+        emailError.classList.add('hidden');
+        passwordError.classList.add('hidden');
+
+        // Validate role
+        const role = form.querySelector('input[name="role"]:checked');
+        if (!role) {
+          roleError.classList.remove('hidden');
+          return;
+        }
+
+        // Validate email
+        const emailValid = validateEmail(email.value.trim());
+        if (!emailValid) {
+          emailError.classList.remove('hidden');
+          email.focus();
+          return;
+        }
+
+        // Validate password
+        if (!password.value || password.value.length < 8) {
+          passwordError.classList.remove('hidden');
+          password.focus();
+          return;
+        }
+
+        const payload = {
+          role: role.value, // "passenger" or "driver"
+          email: email.value.trim().toLowerCase(),
+          password: password.value,
+        };
+
+        try {
+          const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            alert(data?.message || 'Login failed');
+            return;
+          }
+          alert(`Welcome ${data.fullName || data.email}!`);
+          // Redirect placeholder: change to your app's dashboard
+          // window.location.href = '/dashboard.html';
+          form.reset();
+        } catch (err) {
+          alert('Network error. Please try again.');
+        }
+      });
+    </script>
+  </body>
+  </html>
+
+
